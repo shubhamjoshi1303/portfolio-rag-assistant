@@ -18,7 +18,7 @@ resource "aws_iam_role" "lambda" {
 }
 
 resource "aws_iam_role_policy" "lambda_logging" {
-  name = "${var.project_name}-lambda-policy"
+  name = "${var.project_name}-lambda-logging"
   role = aws_iam_role.lambda.id
 
   policy = jsonencode({
@@ -30,14 +30,14 @@ resource "aws_iam_role_policy" "lambda_logging" {
           "logs:PutLogEvents"
         ]
         Effect   = "Allow"
-        Resource = "${aws_cloudwatch_log_group.lambda.arn}:*"
+        Resource = "arn:aws:logs:${var.aws_region}:*:log-group:/aws/lambda/${var.project_name}-chat:*"
       },
       {
         Action = [
           "bedrock:InvokeModel"
         ]
         Effect   = "Allow"
-        Resource = "arn:aws:bedrock:${var.aws_region}::foundation-model/amazon.nova-micro-v1:0"
+        Resource = "*"
       }
     ]
   })

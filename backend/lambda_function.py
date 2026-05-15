@@ -57,7 +57,7 @@ def _extract_answer(response_body):
     return "".join(text_parts).strip()
 
 
-def handler(event, context):
+def lambda_handler(event, context):
     try:
         message = _parse_body(event)
     except ValueError as exc:
@@ -111,3 +111,8 @@ def handler(event, context):
             "sources": [],
         },
     )
+
+
+# Compatibility for any existing Lambda version still configured with
+# lambda_function.handler before Terraform updates it to lambda_handler.
+handler = lambda_handler
