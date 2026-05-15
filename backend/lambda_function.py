@@ -11,13 +11,34 @@ MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "amazon.nova-micro-v1:0")
 
 
 def _response(status_code, body):
-    return {
+    response = {
         "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
         },
         "body": json.dumps(body),
     }
+    print("Final API response:", response)
+    return response
+
+
+def _success_response(answer, sources):
+    return _response(
+        200,
+        {
+            "answer": answer,
+            "sources": sources,
+        },
+    )
+
+
+def _error_response(error):
+    return _response(
+        500,
+        {
+            "message": str(error),
+        },
+    )
 
 
 def _parse_body(event):
@@ -60,24 +81,21 @@ def _extract_answer(response_body):
 def lambda_handler(event, context):
     try:
         message = _parse_body(event)
-    except ValueError as exc:
-        return _response(400, {"error": str(exc)})
 
-    request_body = {
-        "messages": [
-            {
-                "role": "user",
-                "content": [{"text": message}],
-            }
-        ],
-        "inferenceConfig": {
-            "maxTokens": 512,
-            "temperature": 0.7,
-            "topP": 0.9,
-        },
-    }
+        request_body = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [{"text": message}],
+                }
+            ],
+            "inferenceConfig": {
+                "maxTokens": 512,
+                "temperature": 0.7,
+                "topP": 0.9,
+            },
+        }
 
-    try:
         bedrock_runtime = boto3.client("bedrock-runtime")
         response = bedrock_runtime.invoke_model(
             modelId=MODEL_ID,
@@ -87,30 +105,19 @@ def lambda_handler(event, context):
         )
         response_body = json.loads(response["body"].read())
         answer = _extract_answer(response_body)
-    except (BotoCoreError, ClientError, KeyError, json.JSONDecodeError) as exc:
-        return _response(
-            502,
-            {
-                "error": "Bedrock invocation failed.",
-                "detail": str(exc),
-            },
-        )
 
-    if not answer:
-        return _response(
-            502,
-            {
-                "error": "Bedrock returned an empty response.",
-            },
-        )
+        if not answer:
+            raise ValueError("Bedrock returned an empty response.")
 
-    return _response(
-        200,
-        {
-            "answer": answer,
-            "sources": [],
-        },
-    )
+        return _success_response(answer, [])
+    except (
+        ValueError,
+        BotoCoreError,
+        ClientError,
+        KeyError,
+        json.JSONDecodeError,
+    ) as exc:
+        return _error_response(exc)
 
 
 # Compatibility for any existing Lambda version still configured with
