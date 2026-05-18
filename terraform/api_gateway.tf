@@ -13,6 +13,7 @@ resource "aws_apigatewayv2_api" "http_api" {
     ]
     allow_origins = [
       "http://localhost:5173",
+      "https://portfolio.shubhamjoshi.xyz",
       "https://shubhamjoshi.xyz",
       "https://www.shubhamjoshi.xyz"
     ]
