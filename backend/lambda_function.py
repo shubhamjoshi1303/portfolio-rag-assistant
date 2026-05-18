@@ -160,8 +160,35 @@ def _nova_message(role, content):
     }
 
 
+def _sanitize_history_for_bedrock(history):
+    leading_assistant_messages_dropped = 0
+    while history and history[0]["role"] == "assistant":
+        history = history[1:]
+        leading_assistant_messages_dropped += 1
+
+    alternating_history = []
+    expected_role = "user"
+    for item in history:
+        if item["role"] != expected_role:
+            continue
+
+        alternating_history.append(item)
+        expected_role = "assistant" if expected_role == "user" else "user"
+
+    return alternating_history, leading_assistant_messages_dropped
+
+
 def _nova_payload(message, history):
-    messages = [_nova_message(item["role"], item["content"]) for item in history]
+    bedrock_history, leading_assistant_messages_dropped = _sanitize_history_for_bedrock(
+        history
+    )
+    _log(
+        "bedrock history prepared",
+        leading_assistant_messages_dropped=leading_assistant_messages_dropped,
+        history_messages_sent=len(bedrock_history),
+    )
+
+    messages = [_nova_message(item["role"], item["content"]) for item in bedrock_history]
     messages.append(_nova_message("user", message))
 
     return {
