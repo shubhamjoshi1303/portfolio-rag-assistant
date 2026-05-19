@@ -15,14 +15,13 @@ Over the past few years, I’ve built projects involving:
 
 I enjoy designing systems end-to-end — from backend architecture and cloud infrastructure to frontend integration and deployment workflows. I’m particularly interested in cloud engineering, AI infrastructure, retrieval systems, scalable backend systems, and production deployment architecture.
 
-## Non technical stuff 
-
- I’ve always been heavily involved in sports and team-based activities. 
+I’m currently focused on building cloud-native AI systems, improving my software engineering depth, and continuing to develop production-grade projects that combine cloud infrastructure, backend engineering, and applied machine learning. 
  
- I played soccer throughout high school and college, and later continued participating in intramural soccer while studying at Syracuse University. Sports have played a major role in shaping my teamwork, discipline, and competitive mindset.
+## Hobbies 
+
+I played soccer throughout high school and college, and later continued participating in intramural soccer while studying at Syracuse University. I’ve always been heavily involved in sports and team-based activities. Sports have played a major role in shaping my teamwork, discipline, and competitive mindset.
 
 I was also a member of the Syracuse University Kendo Club, which introduced me to Japanese martial arts culture and sparked a long-term interest in Japanese language and culture. I’m currently learning Japanese as a personal long-term goal.
 
 In my free time, I enjoy video games and regularly play on Xbox. I’ve always enjoyed games that involve strategy, world-building, competition, and collaborative gameplay, which naturally aligns with my interest in systems, problem-solving, and technology.
 
-I’m currently focused on building cloud-native AI systems, improving my software engineering depth, and continuing to develop production-grade projects that combine cloud infrastructure, backend engineering, and applied machine learning.
