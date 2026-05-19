@@ -9,3 +9,9 @@ variable "project_name" {
   type        = string
   default     = "portfolio-rag-assistant"
 }
+
+variable "knowledge_base_s3_prefix" {
+  description = "S3 prefix for uploaded knowledge-base documents."
+  type        = string
+  default     = "knowledge-base"
+}

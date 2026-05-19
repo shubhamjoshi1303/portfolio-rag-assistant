@@ -2,6 +2,7 @@ import base64
 import binascii
 import json
 import os
+from pathlib import PurePosixPath
 import traceback
 
 import boto3
@@ -9,6 +10,12 @@ from botocore.exceptions import BotoCoreError, ClientError
 
 
 MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "amazon.nova-micro-v1:0")
+AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
+MODEL_ARN = os.environ.get(
+    "BEDROCK_MODEL_ARN",
+    f"arn:aws:bedrock:{AWS_REGION}::foundation-model/{MODEL_ID}",
+)
+KNOWLEDGE_BASE_ID = os.environ.get("BEDROCK_KNOWLEDGE_BASE_ID", "Y1YOTQ6UKB")
 DEFAULT_ORIGIN = "https://shubhamjoshi.xyz"
 ALLOWED_ORIGINS = {
     "http://localhost:5173",
@@ -214,7 +221,7 @@ def _extract_answer(response_body):
     return "".join(text_parts).strip()
 
 
-def _invoke_bedrock(message, history):
+def _invoke_bedrock_model(message, history):
     bedrock_runtime = boto3.client("bedrock-runtime")
     response = bedrock_runtime.invoke_model(
         modelId=MODEL_ID,
@@ -230,6 +237,160 @@ def _invoke_bedrock(message, history):
         raise RuntimeError("Bedrock returned an empty response.")
 
     return answer
+
+
+def _history_query_text(message, history):
+    if not history:
+        return message
+
+    lines = ["Recent conversation context:"]
+    for item in history:
+        label = "User" if item["role"] == "user" else "Assistant"
+        lines.append(f"{label}: {item['content']}")
+
+    lines.extend(
+        [
+            "",
+            "Current user question:",
+            message,
+            "",
+            "Answer the current user question using the portfolio knowledge base.",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _location_uri(location):
+    if not isinstance(location, dict):
+        return ""
+
+    for key in (
+        "s3Location",
+        "webLocation",
+        "confluenceLocation",
+        "salesforceLocation",
+        "sharePointLocation",
+        "customDocumentLocation",
+        "kendraDocumentLocation",
+    ):
+        value = location.get(key)
+        if isinstance(value, dict):
+            uri = value.get("uri") or value.get("url")
+            if isinstance(uri, str):
+                return uri
+
+    return ""
+
+
+def _source_title(uri, metadata):
+    for key in ("title", "document_title", "source", "x-amz-bedrock-kb-source-uri"):
+        value = metadata.get(key) if isinstance(metadata, dict) else None
+        if isinstance(value, str) and value.strip():
+            if value.startswith("s3://"):
+                return PurePosixPath(value).name or value
+            return value.strip()
+
+    if uri:
+        return PurePosixPath(uri).name or uri
+
+    return "Knowledge base source"
+
+
+def _source_snippet(reference):
+    content = reference.get("content") if isinstance(reference, dict) else {}
+    if not isinstance(content, dict):
+        return ""
+
+    text = content.get("text")
+    if isinstance(text, str):
+        return text.strip()
+
+    byte_content = content.get("byteContent")
+    if isinstance(byte_content, str):
+        return byte_content[:500]
+
+    row = content.get("row")
+    if isinstance(row, list):
+        return " ".join(str(item) for item in row)[:500]
+
+    return ""
+
+
+def _extract_sources(response_body):
+    sources = []
+    seen = set()
+
+    for citation in response_body.get("citations", []):
+        for reference in citation.get("retrievedReferences", []):
+            if not isinstance(reference, dict):
+                continue
+
+            metadata = reference.get("metadata") or {}
+            uri = _location_uri(reference.get("location") or {})
+            snippet = _source_snippet(reference)
+            title = _source_title(uri, metadata)
+            dedupe_key = (uri, snippet[:120])
+
+            if dedupe_key in seen:
+                continue
+
+            seen.add(dedupe_key)
+            sources.append(
+                {
+                    "title": title,
+                    "uri": uri,
+                    "snippet": snippet,
+                }
+            )
+
+    return sources
+
+
+def _retrieve_and_generate(message, history):
+    query_text = _history_query_text(message, history)
+    client = boto3.client("bedrock-agent-runtime")
+    response_body = client.retrieve_and_generate(
+        input={
+            "text": query_text,
+        },
+        retrieveAndGenerateConfiguration={
+            "type": "KNOWLEDGE_BASE",
+            "knowledgeBaseConfiguration": {
+                "knowledgeBaseId": KNOWLEDGE_BASE_ID,
+                "modelArn": MODEL_ARN,
+                "retrievalConfiguration": {
+                    "vectorSearchConfiguration": {
+                        "numberOfResults": 5,
+                    }
+                },
+            },
+        },
+    )
+    _log(
+        "retrieve_and_generate response",
+        response_keys=sorted(response_body.keys()),
+        citations_count=len(response_body.get("citations", [])),
+    )
+
+    answer = response_body.get("output", {}).get("text", "").strip()
+    if not answer:
+        raise RuntimeError("Bedrock Knowledge Base returned an empty response.")
+
+    sources = _extract_sources(response_body)
+    _log("retrieve_and_generate sources parsed", sources_count=len(sources))
+    return answer, sources
+
+
+def _generate_answer(message, history):
+    try:
+        return _retrieve_and_generate(message, history)
+    except (BotoCoreError, ClientError, KeyError, TypeError, RuntimeError) as exc:
+        _log(
+            "retrieve_and_generate failed; falling back to invoke_model",
+            detail=_safe_error_detail(exc),
+        )
+        answer = _invoke_bedrock_model(message, history)
+        return answer, []
 
 
 def _safe_error_detail(error):
@@ -278,13 +439,13 @@ def lambda_handler(event, context):
             history_messages_used=len(history_used),
         )
 
-        answer = _invoke_bedrock(message, history_used)
+        answer, sources = _generate_answer(message, history_used)
         return _response(
             200,
             origin,
             {
                 "answer": answer,
-                "sources": [],
+                "sources": sources,
             },
         )
     except BadRequestError as exc:

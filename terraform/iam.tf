@@ -34,7 +34,9 @@ resource "aws_iam_role_policy" "lambda_logging" {
       },
       {
         Action = [
-          "bedrock:InvokeModel"
+          "bedrock:InvokeModel",
+          "bedrock:Retrieve",
+          "bedrock:RetrieveAndGenerate"
         ]
         Effect   = "Allow"
         Resource = "*"

@@ -1,14 +1,25 @@
 # Portfolio RAG Assistant
 
-Minimal first milestone for a portfolio RAG assistant.
+Serverless portfolio assistant using API Gateway, Lambda, Amazon Bedrock, and
+Bedrock Knowledge Bases.
 
-## Current Scope
+## Sync Knowledge Base
 
-- Project structure
-- Mock Python 3.12 Lambda handler
-- Terraform file placeholders
-- Knowledge-base placeholders
-- Basic evaluation question placeholder
-- GitHub Actions validation workflow
+After Terraform uploads documents to S3 and creates the Bedrock Knowledge Base,
+start ingestion with:
 
-Bedrock integration and vector storage are intentionally not included yet.
+```bash
+python3 scripts/sync_knowledge_base.py
+```
+
+To wait until ingestion finishes:
+
+```bash
+python3 scripts/sync_knowledge_base.py --wait
+```
+
+The script defaults to:
+
+- Knowledge Base ID: `Y1YOTQ6UKB`
+- Data Source ID: `EABKR7EQFA`
+- Region: `us-east-1`
