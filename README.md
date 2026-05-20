@@ -20,9 +20,9 @@ python3 scripts/sync_knowledge_base.py --wait
 
 The script defaults to:
 
-- Knowledge Base ID: `Y1YOTQ6UKB`
-- Data Source ID: `EABKR7EQFA`
-- Region: `us-east-1`
+- Knowledge Base ID: set with `BEDROCK_KNOWLEDGE_BASE_ID`
+- Data Source ID: set with `BEDROCK_DATA_SOURCE_ID`
+- Region: set with `AWS_REGION`
 
 ## GitHub Actions CI/CD
 
@@ -31,28 +31,28 @@ Do not create long-lived AWS access keys for CI/CD.
 
 Configure these GitHub repository secrets:
 
-- `AWS_ROLE_ARN`: `arn:aws:iam::640465964063:role/portfolio-rag-assistant-github-actions`
-- `KNOWLEDGE_BASE_BUCKET_NAME`: `portfolio-rag-assistant-knowledge-base-640465964063-us-east-1`
-- `KNOWLEDGE_BASE_S3_PREFIX`: `knowledge-base`
-- `BEDROCK_KNOWLEDGE_BASE_ID`: `Y1YOTQ6UKB`
-- `BEDROCK_DATA_SOURCE_ID`: `EABKR7EQFA`
+- `AWS_ROLE_ARN`: `arn:aws:iam::<account-id>:role/<github-actions-role-name>`
+- `KNOWLEDGE_BASE_BUCKET_NAME`: `<terraform-managed-knowledge-base-bucket>`
+- `KNOWLEDGE_BASE_S3_PREFIX`: `<knowledge-base-prefix>`
+- `BEDROCK_KNOWLEDGE_BASE_ID`: `<bedrock-knowledge-base-id>`
+- `BEDROCK_DATA_SOURCE_ID`: `<bedrock-data-source-id>`
 
 Terraform manages the dedicated GitHub Actions role:
 
 ```text
-arn:aws:iam::640465964063:role/portfolio-rag-assistant-github-actions
+arn:aws:iam::<account-id>:role/<github-actions-role-name>
 ```
 
 The role trust policy allows only this repository on the `main` branch to assume
 the role through `token.actions.githubusercontent.com`:
 
 ```text
-repo:shubhamjoshi1303/portfolio-rag-assistant:ref:refs/heads/main
+repo:<github-owner>/<github-repo>:ref:refs/heads/main
 ```
 
 The role is scoped for:
 
-- Terraform remote state access to `shubham-terraform-state-cloud`
+- Terraform remote state access to the configured Terraform backend bucket
 - Terraform-managed AWS resources in this project
 - S3 read/write/delete/list access to the knowledge-base bucket
 - Bedrock Knowledge Base ingestion: `bedrock:StartIngestionJob` and `bedrock:GetIngestionJob`
