@@ -24,10 +24,105 @@ ALLOWED_ORIGINS = {
     "https://portfolio.shubhamjoshi.xyz",
 }
 MAX_HISTORY_MESSAGES = 6
+MAX_MESSAGE_LENGTH = 1500
+MAX_HISTORY_MESSAGE_LENGTH = 1000
+MAX_SERIALIZED_HISTORY_LENGTH = 6000
+REJECTION_ANSWER = (
+    "I’m designed to answer questions about Shubham’s portfolio, projects, "
+    "AWS work, certifications, education, and technical background."
+)
+
+PROMPT_INJECTION_PATTERNS = (
+    "ignore previous instructions",
+    "reveal system prompt",
+    "developer message",
+    "hidden instructions",
+    "jailbreak",
+    "override instructions",
+    "forget all instructions",
+    "act as",
+    "print your prompt",
+    "system message",
+)
+
+RELEVANCE_KEYWORDS = (
+    "shubham",
+    "joshi",
+    "resume",
+    "project",
+    "portfolio",
+    "aws",
+    "cloud",
+    "certification",
+    "education",
+    "coursework",
+    "rag",
+    "bedrock",
+    "embedding",
+    "vector search",
+    "node2vec",
+    "lambda",
+    "ecs",
+    "shor",
+    "ecommerce",
+    "e-commerce",
+    "movie recommender",
+    "cloud resume",
+    "electricity forecast",
+    "electricity price",
+    "facial recognition",
+    "attendance system",
+    "technical interview",
+    "interview",
+    "knowledge base",
+    "terraform",
+    "api gateway",
+    "s3",
+    "cloudfront",
+)
+
+OFF_TOPIC_PATTERNS = (
+    "celebrity",
+    "celebrities",
+    "politics",
+    "election",
+    "president",
+    "senator",
+    "sports",
+    "nba",
+    "nfl",
+    "mlb",
+    "soccer",
+    "medical advice",
+    "legal advice",
+    "financial advice",
+    "investment advice",
+    "dating",
+    "girlfriend",
+    "boyfriend",
+    "personal life",
+    "general trivia",
+    "trivia",
+)
 
 
 class BadRequestError(ValueError):
     pass
+
+
+class RejectedRequest(ValueError):
+    def __init__(
+        self,
+        reason,
+        message_length=0,
+        history_count=0,
+        serialized_history_length=0,
+    ):
+        super().__init__(reason)
+        self.reason = reason
+        self.message_length = message_length
+        self.history_count = history_count
+        self.serialized_history_length = serialized_history_length
 
 
 def _log(message, **fields):
@@ -147,13 +242,81 @@ def _parse_request(event):
         validated_history.append(
             {
                 "role": role,
-                "content": content,
+                "content": content.strip()[:MAX_HISTORY_MESSAGE_LENGTH],
             }
         )
 
     history_used = validated_history[-MAX_HISTORY_MESSAGES:]
+    serialized_history_length = len(json.dumps(history_used))
 
-    return message, validated_history, history_used
+    return message, validated_history, history_used, serialized_history_length
+
+
+def _contains_pattern(text, patterns):
+    text_lower = text.lower()
+    return any(pattern in text_lower for pattern in patterns)
+
+
+def _validate_request_scope(message, history_received, history_used, history_length):
+    combined_text = " ".join(
+        [message, *[item["content"] for item in history_used]]
+    ).lower()
+
+    if len(message) > MAX_MESSAGE_LENGTH:
+        raise RejectedRequest(
+            "message_too_long",
+            message_length=len(message),
+            history_count=len(history_received),
+            serialized_history_length=history_length,
+        )
+
+    if history_length > MAX_SERIALIZED_HISTORY_LENGTH:
+        raise RejectedRequest(
+            "history_too_long",
+            message_length=len(message),
+            history_count=len(history_received),
+            serialized_history_length=history_length,
+        )
+
+    if _contains_pattern(combined_text, PROMPT_INJECTION_PATTERNS):
+        raise RejectedRequest(
+            "prompt_injection_detected",
+            message_length=len(message),
+            history_count=len(history_received),
+            serialized_history_length=history_length,
+        )
+
+    has_relevance = _contains_pattern(combined_text, RELEVANCE_KEYWORDS)
+    has_off_topic = _contains_pattern(combined_text, OFF_TOPIC_PATTERNS)
+    if has_off_topic or not has_relevance:
+        raise RejectedRequest(
+            "off_topic",
+            message_length=len(message),
+            history_count=len(history_received),
+            serialized_history_length=history_length,
+        )
+
+
+def _rejection_response(origin, rejection):
+    _log(
+        "request rejected",
+        rejection_reason=rejection.reason,
+        message_length=rejection.message_length,
+        history_count=rejection.history_count,
+        serialized_history_length=rejection.serialized_history_length,
+        bedrock_skipped=True,
+    )
+    # Rejections happen before Bedrock or Guardrails calls. This prevents
+    # unrelated, oversized, or injection-like requests from generating
+    # unnecessary model inference and Guardrail evaluation costs.
+    return _response(
+        200,
+        origin,
+        {
+            "answer": REJECTION_ANSWER,
+            "sources": [],
+        },
+    )
 
 
 def _nova_message(role, content):
@@ -201,8 +364,8 @@ def _nova_payload(message, history):
     return {
         "messages": messages,
         "inferenceConfig": {
-            "maxTokens": 512,
-            "temperature": 0.7,
+            "maxTokens": 350,
+            "temperature": 0.4,
             "topP": 0.9,
         },
     }
@@ -240,10 +403,15 @@ def _invoke_bedrock_model(message, history):
 
 
 def _history_query_text(message, history):
-    if not history:
-        return message
+    instructions = (
+        "Answer concisely in 3-6 sentences using Shubham's portfolio knowledge "
+        "base. Avoid unnecessary long outputs."
+    )
 
-    lines = ["Recent conversation context:"]
+    if not history:
+        return "\n".join([instructions, "", "Current user question:", message])
+
+    lines = [instructions, "", "Recent conversation context:"]
     for item in history:
         label = "User" if item["role"] == "user" else "Assistant"
         lines.append(f"{label}: {item['content']}")
@@ -254,7 +422,7 @@ def _history_query_text(message, history):
             "Current user question:",
             message,
             "",
-            "Answer the current user question using the portfolio knowledge base.",
+            "Use the context only to resolve follow-up references.",
         ]
     )
     return "\n".join(lines)
@@ -363,6 +531,15 @@ def _retrieve_and_generate(message, history):
                         "numberOfResults": 5,
                     }
                 },
+                "generationConfiguration": {
+                    "inferenceConfig": {
+                        "textInferenceConfig": {
+                            "maxTokens": 350,
+                            "temperature": 0.4,
+                            "topP": 0.9,
+                        }
+                    }
+                },
             },
         },
     )
@@ -431,12 +608,25 @@ def lambda_handler(event, context):
         )
 
     try:
-        message, history_received, history_used = _parse_request(event)
+        (
+            message,
+            history_received,
+            history_used,
+            serialized_history_length,
+        ) = _parse_request(event)
         _log(
             "parsed message",
             current_message=message,
+            message_length=len(message),
             history_messages_received=len(history_received),
             history_messages_used=len(history_used),
+            serialized_history_length=serialized_history_length,
+        )
+        _validate_request_scope(
+            message,
+            history_received,
+            history_used,
+            serialized_history_length,
         )
 
         answer, sources = _generate_answer(message, history_used)
@@ -448,6 +638,8 @@ def lambda_handler(event, context):
                 "sources": sources,
             },
         )
+    except RejectedRequest as exc:
+        return _rejection_response(origin, exc)
     except BadRequestError as exc:
         _log("bad request", detail=str(exc))
         return _response(
