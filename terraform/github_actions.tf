@@ -34,7 +34,9 @@ resource "aws_iam_role" "github_actions" {
 }
 
 resource "aws_iam_role_policy" "github_actions" {
-  name = "${var.project_name}-github-actions-policy"
+  # The v2 name intentionally forces replacement of the old inline policy so
+  # GitHub Actions does not keep assuming a stale policy document during refresh.
+  name = "${var.project_name}-github-actions-policy-v2"
   role = aws_iam_role.github_actions.id
 
   policy = jsonencode({
@@ -94,6 +96,21 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*"
       },
       {
+        # Terraform's AWS provider performs several global read/list calls while
+        # refreshing state; keep these explicit so CI does not fail one API at a time.
+        Sid = "ProviderGlobalRefreshReads"
+        Action = [
+          "iam:GetOpenIDConnectProvider",
+          "iam:ListOpenIDConnectProviders",
+          "logs:DescribeLogGroups",
+          "s3:ListAllMyBuckets",
+          "s3vectors:ListTagsForResource",
+          "s3vectors:ListVectorBuckets"
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
         Sid = "KnowledgeBaseBucketManagement"
         Action = [
           "s3:CreateBucket",
@@ -122,7 +139,34 @@ resource "aws_iam_role_policy" "github_actions" {
           "s3:DeleteMetricsConfiguration",
           "s3:GetAnalyticsConfiguration",
           "s3:PutAnalyticsConfiguration",
-          "s3:DeleteAnalyticsConfiguration"
+          "s3:DeleteAnalyticsConfiguration",
+          "s3:ListBucketMultipartUploads"
+        ]
+        Effect   = "Allow"
+        Resource = aws_s3_bucket.knowledge_base.arn
+      },
+      {
+        # S3 bucket refresh uses specific GetBucket* APIs that are easy to miss
+        # when scoping CI permissions to a single project bucket.
+        Sid = "KnowledgeBaseBucketRefreshReads"
+        Action = [
+          "s3:GetBucketAcl",
+          "s3:GetBucketCORS",
+          "s3:GetBucketLocation",
+          "s3:GetBucketLogging",
+          "s3:GetBucketNotification",
+          "s3:GetBucketObjectLockConfiguration",
+          "s3:GetBucketOwnershipControls",
+          "s3:GetBucketPolicy",
+          "s3:GetBucketPolicyStatus",
+          "s3:GetBucketPublicAccessBlock",
+          "s3:GetBucketRequestPayment",
+          "s3:GetBucketTagging",
+          "s3:GetBucketVersioning",
+          "s3:GetBucketWebsite",
+          "s3:GetEncryptionConfiguration",
+          "s3:GetLifecycleConfiguration",
+          "s3:GetReplicationConfiguration"
         ]
         Effect   = "Allow"
         Resource = aws_s3_bucket.knowledge_base.arn
@@ -136,7 +180,6 @@ resource "aws_iam_role_policy" "github_actions" {
           "s3:GetObjectTagging",
           "s3:PutObjectTagging",
           "s3:DeleteObjectTagging",
-          "s3:ListBucketMultipartUploads",
           "s3:ListMultipartUploadParts",
           "s3:AbortMultipartUpload"
         ]

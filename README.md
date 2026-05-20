@@ -31,21 +31,32 @@ Do not create long-lived AWS access keys for CI/CD.
 
 Configure these GitHub repository secrets:
 
-- `AWS_ROLE_ARN`: existing IAM role ARN trusted by GitHub OIDC for this repository.
+- `AWS_ROLE_ARN`: `arn:aws:iam::640465964063:role/portfolio-rag-assistant-github-actions`
 - `KNOWLEDGE_BASE_BUCKET_NAME`: `portfolio-rag-assistant-knowledge-base-640465964063-us-east-1`
 - `KNOWLEDGE_BASE_S3_PREFIX`: `knowledge-base`
 - `BEDROCK_KNOWLEDGE_BASE_ID`: `Y1YOTQ6UKB`
 - `BEDROCK_DATA_SOURCE_ID`: `EABKR7EQFA`
 
-The existing OIDC role trust policy should allow this repository on the `main`
-branch to assume the role through `token.actions.githubusercontent.com`.
+Terraform manages the dedicated GitHub Actions role:
 
-The role needs permissions for:
+```text
+arn:aws:iam::640465964063:role/portfolio-rag-assistant-github-actions
+```
+
+The role trust policy allows only this repository on the `main` branch to assume
+the role through `token.actions.githubusercontent.com`:
+
+```text
+repo:shubhamjoshi1303/portfolio-rag-assistant:ref:refs/heads/main
+```
+
+The role is scoped for:
 
 - Terraform remote state access to `shubham-terraform-state-cloud`
 - Terraform-managed AWS resources in this project
 - S3 read/write/delete/list access to the knowledge-base bucket
 - Bedrock Knowledge Base ingestion: `bedrock:StartIngestionJob` and `bedrock:GetIngestionJob`
+- `iam:PassRole` only for this project’s Lambda and Bedrock Knowledge Base roles
 
 Workflows:
 
