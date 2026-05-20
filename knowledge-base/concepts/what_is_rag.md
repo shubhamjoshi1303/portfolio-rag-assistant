@@ -1,4 +1,3 @@
-````md
 # What is RAG? (Retrieval-Augmented Generation)
 
 ## Overview
@@ -37,7 +36,7 @@ Information Retrieval
 Large Language Model
         =
 Grounded AI Responses
-````
+```
 
 Instead of generating answers purely from model memory, the model retrieves relevant documents first and then generates responses using those retrieved documents as context.
 
@@ -97,7 +96,7 @@ In this portfolio assistant project, the knowledge base contains:
 * machine learning projects
 * cloud engineering projects
 
-The documents are stored in Amazon S3 and indexed through Bedrock Knowledge Bases.
+The documents are stored in Amazon S3 and indexed through Amazon Bedrock Knowledge Bases.
 
 ---
 
@@ -122,9 +121,9 @@ Example:
 
 may retrieve documents related to:
 
-* Bedrock
+* Amazon Bedrock
 * Knowledge Bases
-* Lambda
+* AWS Lambda
 * Titan Embeddings
 * vector retrieval
 
@@ -132,7 +131,7 @@ even if the wording is different.
 
 This portfolio assistant uses:
 
-* Amazon Titan Embeddings
+* Amazon Titan Embeddings V2
 
 for semantic document representation.
 
@@ -215,22 +214,22 @@ for lightweight, cost-efficient answer generation.
 
 ---
 
-# 6. Guardrails / Safety
+# 6. Application-Layer Guardrails
 
 Modern RAG systems often include safety and governance layers.
 
-Guardrails help:
+This project implements application-layer guardrails inside AWS Lambda to improve safety, relevance, and cost control.
 
-* reduce hallucinations
-* prevent unsafe outputs
-* block irrelevant/off-topic responses
+These controls help:
+
+* reduce prompt injection attempts
+* limit irrelevant/off-topic requests
+* enforce scoped portfolio-focused responses
+* restrict oversized prompts and excessive history
+* reduce unnecessary model usage costs
 * improve responsible AI behavior
 
-This project uses:
-
-* Amazon Bedrock Guardrails
-
-to improve public-facing AI safety.
+The assistant performs validation before requests reach the LLM, making the system more efficient and predictable for public-facing usage.
 
 ---
 
@@ -243,7 +242,7 @@ API Gateway HTTP API
         ↓
 AWS Lambda
         ↓
-Amazon Bedrock Guardrails
+Application-Layer Guardrails
         ↓
 Amazon Bedrock Knowledge Bases
         ↓
@@ -251,7 +250,7 @@ RetrieveAndGenerate
         ↓
 Amazon Nova Micro
         ↓
-Titan Embeddings
+Titan Embeddings V2
         ↓
 S3 Vectors
         ↓
@@ -267,7 +266,7 @@ Portfolio Knowledge Documents
 The assistant uses:
 
 * API Gateway
-* Lambda
+* AWS Lambda
 
 because chatbot traffic is intermittent and request durations are short-lived.
 
@@ -293,7 +292,7 @@ without managing custom vector databases manually.
 
 ---
 
-## Titan Embeddings
+## Titan Embeddings V2
 
 Titan Embeddings were selected because they integrate directly with Bedrock Knowledge Bases and provide semantic vector representations optimized for retrieval workflows.
 
@@ -302,6 +301,8 @@ Titan Embeddings were selected because they integrate directly with Bedrock Know
 ## S3 Vectors
 
 S3 Vectors were selected because they provide AWS-native vector storage integrated with Bedrock retrieval systems.
+
+This eliminates the need to manage external vector databases or OpenSearch clusters for this project.
 
 ---
 
@@ -316,16 +317,22 @@ Nova Micro was chosen because:
 
 ---
 
-## Guardrails
+## Application-Layer Guardrails
 
-Guardrails were added because the assistant is public-facing.
+Application-layer guardrails were implemented because the assistant is public-facing.
 
-They help:
+The Lambda layer performs:
 
-* reduce unsafe responses
-* improve topic control
-* limit hallucinations
-* support responsible AI usage
+* prompt validation
+* scoped response enforcement
+* prompt injection filtering
+* request size limiting
+* history truncation
+* off-topic request handling
+
+before requests reach the LLM.
+
+This architecture reduces unnecessary inference costs while improving reliability and response quality.
 
 ---
 
@@ -339,6 +346,9 @@ Several production and architectural challenges were encountered:
 * API Gateway response formatting
 * Lambda proxy integration bugs
 * Vite production environment variables
+* frontend conversation memory handling
+* markdown rendering improvements
+* citation rendering and UX
 
 ---
 
@@ -348,6 +358,8 @@ Several production and architectural challenges were encountered:
 * existing resource imports
 * stale Lambda permissions
 * API Gateway deployment synchronization
+* Bedrock Knowledge Base ingestion configuration
+* S3 Vectors metadata indexing limitations
 
 ---
 
@@ -359,6 +371,8 @@ Several production and architectural challenges were encountered:
 * grounding answers in portfolio-specific content
 * avoiding generic LLM responses
 * managing retrieval relevance
+* reducing hallucinations
+* balancing safety controls without overblocking valid project questions
 
 ---
 
@@ -382,6 +396,7 @@ This portfolio assistant uses:
 
 * structured markdown project documents
 * section-based chunking
+* fixed-size chunking during ingestion
 * focused engineering explanations
 
 instead of large unstructured documents.
@@ -403,6 +418,26 @@ even if the project document says:
 ```text
 “serverless RAG-based portfolio knowledge assistant”
 ```
+
+---
+
+## Conversation Memory
+
+The assistant maintains lightweight frontend conversation memory by passing recent chat history with each request.
+
+This allows follow-up questions such as:
+
+```text
+“What technologies did it use?”
+```
+
+to retain conversational context from previous messages.
+
+To reduce cost and maintain predictable behavior:
+
+* history length is capped
+* oversized history is truncated
+* request sizes are validated before inference
 
 ---
 
@@ -451,22 +486,21 @@ RAG systems are widely used in:
 This project demonstrates practical experience with:
 
 * Generative AI
-* Retrieval-Augmented Generation
-* AWS Bedrock
+* Retrieval-Augmented Generation (RAG)
+* Amazon Bedrock
 * Bedrock Knowledge Bases
-* Bedrock Guardrails
-* vector databases
+* Titan Embeddings V2
+* S3 Vectors
 * semantic retrieval
-* embeddings
+* vector databases
 * serverless architecture
 * AWS Lambda
 * API Gateway
 * Terraform
+* GitHub Actions
 * CI/CD workflows
 * frontend/backend integration
 * production debugging
 * AI safety concepts
+* application-layer guardrails
 * cloud-native AI systems
-
-```
-```

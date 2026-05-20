@@ -6,7 +6,7 @@
 
 ## Resume Download
 
-[Download Resume](https://drive.google.com/file/d/1fmJQYUSRIxbE1_InfI04zPLWMKuUDJdi/view)
+[Download Resume](https://drive.google.com/file/d/1X6tyV5DjoZgvnNENW8QcLuO5m-9cKtUa/view)
 
 ---
 
@@ -43,7 +43,7 @@ May 2025
 **July 2025 – Present**
 
 * Engineered a serverless Gen AI RAG chatbot assistant using React, API Gateway, AWS Lambda, and Amazon Bedrock to deliver grounded natural language responses from custom knowledge base documents.
-* Architected a Retrieval-Augmented Generation (RAG) pipeline leveraging Bedrock Knowledge Bases, Titan Embeddings, S3 Vectors, Amazon Nova Micro, and Bedrock Guardrails for context-aware and responsible AI response generation.
+* Architected a Retrieval-Augmented Generation (RAG) pipeline leveraging Bedrock Knowledge Bases, Titan Embeddings, S3 Vectors, Amazon Nova Micro, and application layer Guardrails for context-aware and responsible AI response generation.
 * Developed CI/CD and infrastructure-as-code workflows using GitHub Actions and Terraform to automate serverless deployments and maintain reproducible AWS environments.
 
 ---

@@ -227,7 +227,7 @@ API Gateway HTTP API
         ↓
 AWS Lambda
         ↓
-Amazon Bedrock Guardrails
+Application layer Guardrails
         ↓
 Bedrock Knowledge Bases
         ↓
@@ -496,7 +496,7 @@ This project demonstrates practical experience with:
 * cloud-native AI architecture
 * retrieval pipelines
 * AI grounding
-* Bedrock Guardrails
+* Application layer Guardrails
 * production AWS deployments
 
 ```

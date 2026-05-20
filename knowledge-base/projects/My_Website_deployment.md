@@ -57,7 +57,7 @@ API Gateway HTTP API
         ↓
 AWS Lambda
         ↓
-Amazon Bedrock Guardrails
+Application layer Guardrails
         ↓
 Amazon Bedrock Knowledge Bases
         ↓
@@ -110,7 +110,7 @@ I also configured:
 * Bedrock-powered RAG assistant integration
 * Knowledge Base document structure
 * vector retrieval integration
-* Bedrock Guardrails configuration
+* Application layer Guardrails configuration
 
 Additionally, I designed the frontend UI and visual system using a monochrome SaaS-inspired interface influenced by modern engineering platforms such as Linear, Vercel, and Perplexity.
 
@@ -130,7 +130,7 @@ Additionally, I designed the frontend UI and visual system using a monochrome Sa
 * Amazon API Gateway
 * Amazon Bedrock
 * Bedrock Knowledge Bases
-* Bedrock Guardrails
+* Application layer Guardrails
 * Amazon Nova Micro
 * Titan Embeddings
 * Amazon S3 Vectors
@@ -177,7 +177,7 @@ Additionally, I designed the frontend UI and visual system using a monochrome Sa
 * Bedrock Knowledge Base integration
 * Titan Embeddings semantic retrieval
 * Grounded AI responses from custom portfolio documents
-* Bedrock Guardrails integration
+* Application-layer Guardrails integration
 * Cloud-native deployment workflow
 * Serverless AI architecture integration
 * Production deployment visualization sections
@@ -256,6 +256,6 @@ I built and deployed a production-grade cloud-hosted portfolio platform using Re
 
 I configured private S3 hosting behind CloudFront using Origin Access Control, implemented automated deployment workflows using GitHub Actions and GitHub OIDC federation, and configured HTTPS delivery through ACM and Route53.
 
-I also integrated a serverless RAG-based portfolio assistant using Amazon Bedrock, Bedrock Knowledge Bases, Titan Embeddings, S3 Vectors, Lambda, API Gateway, and Bedrock Guardrails. The assistant retrieves grounded information from my portfolio knowledge base and answers questions about projects, AWS deployments, and technical experience.
+I also integrated a serverless RAG-based portfolio assistant using Amazon Bedrock, Bedrock Knowledge Bases, Titan Embeddings, S3 Vectors, Lambda, API Gateway, and application layer Guardrails. The assistant retrieves grounded information from my portfolio knowledge base and answers questions about projects, AWS deployments, and technical experience.
 
 One of the biggest learning experiences came from debugging real-world production deployment issues involving CloudFront, API Gateway, Lambda, Terraform, Vite frontend builds, DNS propagation, and Bedrock retrieval pipelines while ensuring the AI assistant remained grounded in portfolio-specific knowledge instead of generating generic responses.

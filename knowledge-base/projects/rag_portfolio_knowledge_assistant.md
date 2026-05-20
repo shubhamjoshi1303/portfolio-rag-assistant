@@ -5,7 +5,7 @@
 
 This project is a serverless AI-powered portfolio knowledge assistant built to answer questions about Shubham Joshi’s projects, AWS deployments, certifications, coursework, and technical background. The assistant is integrated directly into a production React portfolio website and uses Retrieval-Augmented Generation (RAG) to provide grounded responses from a custom knowledge base instead of generic LLM outputs.
 
-The system uses Amazon Bedrock, Bedrock Knowledge Bases, Bedrock Guardrails, Amazon Nova Micro, Titan Embeddings, S3 Vectors, AWS Lambda, API Gateway, S3, CloudWatch, and Terraform to create a scalable, safe, and low-cost cloud-native AI application.
+The system uses Amazon Bedrock, Bedrock Knowledge Bases, Application layer Guardrails, Amazon Nova Micro, Titan Embeddings, S3 Vectors, AWS Lambda, API Gateway, S3, CloudWatch, and Terraform to create a scalable, safe, and low-cost cloud-native AI application.
 
 ---
 
@@ -26,7 +26,7 @@ API Gateway HTTP API
                 ↓
 AWS Lambda
                 ↓
-Amazon Bedrock Guardrails
+Application layer Guardrails
                 ↓
 Amazon Bedrock Knowledge Bases
                 ↓
@@ -49,7 +49,7 @@ Infrastructure is provisioned using Terraform with remote S3 state management.
 
 # My Role
 
-I designed and deployed the full serverless architecture, integrated the React frontend with API Gateway, configured Terraform-managed infrastructure, implemented the Bedrock invocation flow, built the RAG pipeline, prepared the knowledge base documents, configured Titan Embeddings and vector retrieval, and added Bedrock Guardrails for safer public-facing AI responses.
+I designed and deployed the full serverless architecture, integrated the React frontend with API Gateway, configured Terraform-managed infrastructure, implemented the Bedrock invocation flow, built the RAG pipeline, prepared the knowledge base documents, configured Titan Embeddings and vector retrieval, and added Application layer Guardrails for safer public-facing AI responses.
 
 I also debugged production issues involving:
 
@@ -69,7 +69,6 @@ I also debugged production issues involving:
 
 * Amazon Bedrock
 * Amazon Bedrock Knowledge Bases
-* Amazon Bedrock Guardrails
 * Amazon Nova Micro
 * Amazon Titan Embeddings
 * Amazon S3 Vectors
@@ -110,7 +109,7 @@ I also debugged production issues involving:
 * Titan Embeddings for semantic document representation
 * S3 Vectors for vector storage
 * Amazon Nova Micro for low-cost answer generation
-* Bedrock Guardrails for safety, topic control, and responsible AI behavior
+* Application layer Guardrails for safety, topic control, and responsible AI behavior
 * Source-grounded responses from curated portfolio knowledge documents
 * API Gateway + Lambda serverless backend
 * Terraform-managed AWS infrastructure
@@ -146,13 +145,13 @@ I used Terraform so the backend infrastructure could be recreated, version-contr
 
 The final system is a production-ready serverless RAG assistant integrated into my live React portfolio website. It allows visitors to ask questions about my projects, certifications, AWS experience, and technical background.
 
-The assistant uses Amazon Bedrock Knowledge Bases, Titan Embeddings, S3 Vectors, and Amazon Nova Micro to retrieve and generate grounded responses from my own portfolio knowledge documents. Bedrock Guardrails are included to add safety controls, reduce off-topic responses, and support responsible public-facing AI behavior.
+The assistant uses Amazon Bedrock Knowledge Bases, Titan Embeddings, S3 Vectors, and Amazon Nova Micro to retrieve and generate grounded responses from my own portfolio knowledge documents. application layer Guardrails are included to add safety controls, reduce off-topic responses, and support responsible public-facing AI behavior.
 
 ---
 
 # Interview Pitch
 
-I built a serverless RAG-based portfolio knowledge assistant using React, API Gateway, AWS Lambda, Amazon Bedrock, Bedrock Knowledge Bases, Bedrock Guardrails, Titan Embeddings, S3 Vectors, S3, CloudWatch, and Terraform. The assistant is embedded into my live portfolio website and answers questions about my projects, certifications, AWS deployments, and technical background using grounded retrieval from my own knowledge base.
+I built a serverless RAG-based portfolio knowledge assistant using React, API Gateway, AWS Lambda, Amazon Bedrock, Bedrock Knowledge Bases, application layer Guardrails, Titan Embeddings, S3 Vectors, S3, CloudWatch, and Terraform. The assistant is embedded into my live portfolio website and answers questions about my projects, certifications, AWS deployments, and technical background using grounded retrieval from my own knowledge base.
 
 The project was focused on cloud architecture and production integration, not just building a chatbot UI. I implemented the serverless backend, connected the frontend to API Gateway, managed the infrastructure with Terraform, integrated Bedrock inference, added RAG retrieval with Knowledge Bases and vector storage, and included Guardrails for safe public AI usage.
 ````
