@@ -40,69 +40,8 @@ PROMPT_INJECTION_PATTERNS = (
     "jailbreak",
     "override instructions",
     "forget all instructions",
-    "act as",
     "print your prompt",
     "system message",
-)
-
-RELEVANCE_KEYWORDS = (
-    "shubham",
-    "joshi",
-    "resume",
-    "project",
-    "portfolio",
-    "aws",
-    "cloud",
-    "certification",
-    "education",
-    "coursework",
-    "rag",
-    "bedrock",
-    "embedding",
-    "vector search",
-    "node2vec",
-    "lambda",
-    "ecs",
-    "shor",
-    "ecommerce",
-    "e-commerce",
-    "movie recommender",
-    "cloud resume",
-    "electricity forecast",
-    "electricity price",
-    "facial recognition",
-    "attendance system",
-    "technical interview",
-    "interview",
-    "knowledge base",
-    "terraform",
-    "api gateway",
-    "s3",
-    "cloudfront",
-)
-
-OFF_TOPIC_PATTERNS = (
-    "celebrity",
-    "celebrities",
-    "politics",
-    "election",
-    "president",
-    "senator",
-    "sports",
-    "nba",
-    "nfl",
-    "mlb",
-    "soccer",
-    "medical advice",
-    "legal advice",
-    "financial advice",
-    "investment advice",
-    "dating",
-    "girlfriend",
-    "boyfriend",
-    "personal life",
-    "general trivia",
-    "trivia",
 )
 
 
@@ -258,6 +197,11 @@ def _contains_pattern(text, patterns):
 
 
 def _validate_request_scope(message, history_received, history_used, history_length):
+    # Lambda only performs cheap deterministic cost/security checks here:
+    # size limits, malformed history validation, and obvious injection phrases.
+    # Broader relevance and off-topic filtering will be handled by Bedrock
+    # Guardrails later. Avoiding keyword topic gates keeps valid follow-ups like
+    # "tell me more" or "what exactly?" from becoming false negatives.
     combined_text = " ".join(
         [message, *[item["content"] for item in history_used]]
     ).lower()
@@ -286,16 +230,6 @@ def _validate_request_scope(message, history_received, history_used, history_len
             serialized_history_length=history_length,
         )
 
-    has_relevance = _contains_pattern(combined_text, RELEVANCE_KEYWORDS)
-    has_off_topic = _contains_pattern(combined_text, OFF_TOPIC_PATTERNS)
-    if has_off_topic or not has_relevance:
-        raise RejectedRequest(
-            "off_topic",
-            message_length=len(message),
-            history_count=len(history_received),
-            serialized_history_length=history_length,
-        )
-
 
 def _rejection_response(origin, rejection):
     _log(
@@ -306,9 +240,9 @@ def _rejection_response(origin, rejection):
         serialized_history_length=rejection.serialized_history_length,
         bedrock_skipped=True,
     )
-    # Rejections happen before Bedrock or Guardrails calls. This prevents
-    # unrelated, oversized, or injection-like requests from generating
-    # unnecessary model inference and Guardrail evaluation costs.
+    # Rejections happen before Bedrock or Guardrails calls. This avoids spending
+    # on obviously oversized or injection-like requests while leaving normal
+    # relevance decisions to the Knowledge Base and future Guardrails.
     return _response(
         200,
         origin,
