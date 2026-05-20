@@ -43,6 +43,25 @@ PROMPT_INJECTION_PATTERNS = (
     "print your prompt",
     "system message",
 )
+NO_CONTEXT_ANSWER_PATTERNS = (
+    "cannot find sufficient information",
+    "can't find sufficient information",
+    "not in the knowledge base",
+    "knowledge base does not contain",
+    "does not contain information about",
+    "may need to look elsewhere",
+    "i don't have information about",
+    "i do not have information about",
+    "i don't have enough information",
+    "i do not have enough information",
+    "i couldn't find information",
+    "i could not find information",
+    "no relevant information",
+    "no information available",
+    "not enough context",
+    "insufficient information",
+    "outside the scope",
+)
 
 
 class BadRequestError(ValueError):
@@ -448,6 +467,11 @@ def _extract_sources(response_body):
     return sources
 
 
+def _is_no_context_answer(answer):
+    answer_lower = answer.lower()
+    return any(pattern in answer_lower for pattern in NO_CONTEXT_ANSWER_PATTERNS)
+
+
 def _retrieve_and_generate(message, history):
     query_text = _history_query_text(message, history)
     client = boto3.client("bedrock-agent-runtime")
@@ -486,6 +510,10 @@ def _retrieve_and_generate(message, history):
     answer = response_body.get("output", {}).get("text", "").strip()
     if not answer:
         raise RuntimeError("Bedrock Knowledge Base returned an empty response.")
+
+    if _is_no_context_answer(answer):
+        _log("sources suppressed", reason="no_relevant_kb_context")
+        return answer, []
 
     sources = _extract_sources(response_body)
     _log("retrieve_and_generate sources parsed", sources_count=len(sources))
