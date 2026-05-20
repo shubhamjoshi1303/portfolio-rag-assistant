@@ -37,3 +37,8 @@ output "knowledge_base_role_arn" {
   description = "IAM role ARN used by Amazon Bedrock Knowledge Bases."
   value       = aws_iam_role.bedrock_knowledge_base.arn
 }
+
+output "github_actions_role_arn" {
+  description = "IAM role ARN assumed by GitHub Actions through OIDC."
+  value       = aws_iam_role.github_actions.arn
+}
