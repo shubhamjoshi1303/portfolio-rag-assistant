@@ -72,18 +72,7 @@ resource "aws_iam_role_policy" "github_actions" {
       {
         Sid = "LambdaDeploymentAccess"
         Action = [
-          "lambda:AddPermission",
-          "lambda:CreateFunction",
-          "lambda:DeleteFunction",
-          "lambda:GetFunction",
-          "lambda:GetFunctionCodeSigningConfig",
-          "lambda:GetPolicy",
-          "lambda:ListVersionsByFunction",
-          "lambda:RemovePermission",
-          "lambda:TagResource",
-          "lambda:UntagResource",
-          "lambda:UpdateFunctionCode",
-          "lambda:UpdateFunctionConfiguration"
+          "lambda:*"
         ]
         Effect   = "Allow"
         Resource = "arn:${data.aws_partition.current.partition}:lambda:${var.aws_region}:${data.aws_caller_identity.current.account_id}:function:${var.project_name}-chat"
@@ -97,79 +86,67 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "arn:${data.aws_partition.current.partition}:apigateway:${var.aws_region}::/apis*"
       },
       {
-        Sid = "CloudWatchLogsProjectAccess"
+        Sid = "CloudWatchLogsAccess"
         Action = [
-          "logs:CreateLogGroup",
-          "logs:DeleteLogGroup",
-          "logs:DescribeLogGroups",
-          "logs:DescribeLogStreams",
-          "logs:ListTagsForResource",
-          "logs:PutRetentionPolicy",
-          "logs:TagResource",
-          "logs:UntagResource"
+          "logs:*"
         ]
         Effect   = "Allow"
         Resource = "*"
       },
       {
-        Sid = "KnowledgeBaseBucketAccess"
+        Sid = "KnowledgeBaseBucketManagement"
         Action = [
           "s3:CreateBucket",
           "s3:DeleteBucket",
-          "s3:GetBucketLocation",
-          "s3:GetBucketPublicAccessBlock",
-          "s3:GetBucketTagging",
-          "s3:GetBucketVersioning",
-          "s3:GetEncryptionConfiguration",
           "s3:ListBucket",
-          "s3:PutBucketPublicAccessBlock",
-          "s3:PutBucketTagging",
-          "s3:PutBucketVersioning",
+          "s3:GetBucket*",
+          "s3:PutBucket*",
+          "s3:DeleteBucket*",
+          "s3:GetEncryptionConfiguration",
           "s3:PutEncryptionConfiguration",
-          "s3:GetBucketPolicy",
-          "s3:PutBucketPolicy",
-          "s3:DeleteBucketPolicy",
-          "s3:GetBucketEncryption",
-          "s3:PutBucketEncryption",
-          "s3:GetBucketAcl",
-          "s3:GetBucketCORS",
-          "s3:PutBucketCORS",
-          "s3:DeleteBucketCORS",
+          "s3:GetLifecycleConfiguration",
+          "s3:PutLifecycleConfiguration",
+          "s3:DeleteLifecycleConfiguration",
+          "s3:GetReplicationConfiguration",
+          "s3:PutReplicationConfiguration",
+          "s3:DeleteReplicationConfiguration",
+          "s3:GetAccelerateConfiguration",
+          "s3:PutAccelerateConfiguration",
+          "s3:GetRequestPayment",
+          "s3:PutRequestPayment",
+          "s3:GetInventoryConfiguration",
+          "s3:PutInventoryConfiguration",
+          "s3:DeleteInventoryConfiguration",
+          "s3:GetMetricsConfiguration",
+          "s3:PutMetricsConfiguration",
+          "s3:DeleteMetricsConfiguration",
+          "s3:GetAnalyticsConfiguration",
+          "s3:PutAnalyticsConfiguration",
+          "s3:DeleteAnalyticsConfiguration"
         ]
         Effect   = "Allow"
         Resource = aws_s3_bucket.knowledge_base.arn
       },
       {
-        Sid = "KnowledgeBaseObjectAccess"
+        Sid = "KnowledgeBaseObjectManagement"
         Action = [
-          "s3:DeleteObject",
           "s3:GetObject",
-          "s3:PutObject"
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:GetObjectTagging",
+          "s3:PutObjectTagging",
+          "s3:DeleteObjectTagging",
+          "s3:ListBucketMultipartUploads",
+          "s3:ListMultipartUploadParts",
+          "s3:AbortMultipartUpload"
         ]
         Effect   = "Allow"
-        Resource = "${aws_s3_bucket.knowledge_base.arn}/${var.knowledge_base_s3_prefix}/*"
+        Resource = "${aws_s3_bucket.knowledge_base.arn}/*"
       },
       {
         Sid = "S3VectorsProjectAccess"
         Action = [
-          "s3vectors:CreateIndex",
-          "s3vectors:CreateVectorBucket",
-          "s3vectors:DeleteIndex",
-          "s3vectors:DeleteVectorBucket",
-          "s3vectors:DeleteVectors",
-          "s3vectors:GetIndex",
-          "s3vectors:GetVectorBucket",
-          "s3vectors:GetVectorBucketPolicy",
-          "s3vectors:GetVectors",
-          "s3vectors:ListIndexes",
-          "s3vectors:ListVectorBuckets",
-          "s3vectors:PutVectorBucketPolicy",
-          "s3vectors:PutVectors",
-          "s3vectors:QueryVectors",
-          "s3vectors:TagResource",
-          "s3vectors:ListTagsForResource",
-          "s3vectors:UntagResource"
-
+          "s3vectors:*"
         ]
         Effect = "Allow"
         Resource = [
@@ -180,21 +157,7 @@ resource "aws_iam_role_policy" "github_actions" {
       {
         Sid = "BedrockKnowledgeBaseAccess"
         Action = [
-          "bedrock:CreateDataSource",
-          "bedrock:CreateKnowledgeBase",
-          "bedrock:DeleteDataSource",
-          "bedrock:DeleteKnowledgeBase",
-          "bedrock:GetDataSource",
-          "bedrock:GetIngestionJob",
-          "bedrock:GetKnowledgeBase",
-          "bedrock:ListDataSources",
-          "bedrock:ListIngestionJobs",
-          "bedrock:ListKnowledgeBases",
-          "bedrock:StartIngestionJob",
-          "bedrock:TagResource",
-          "bedrock:UntagResource",
-          "bedrock:UpdateDataSource",
-          "bedrock:UpdateKnowledgeBase"
+          "bedrock:*"
         ]
         Effect   = "Allow"
         Resource = "*"
@@ -236,12 +199,13 @@ resource "aws_iam_role_policy" "github_actions" {
         ]
       },
       {
-        Sid = "ReadGithubOidcProvider"
+        Sid = "GithubOidcProviderRead"
         Action = [
-          "iam:GetOpenIDConnectProvider"
+          "iam:GetOpenIDConnectProvider",
+          "iam:ListOpenIDConnectProviders"
         ]
         Effect   = "Allow"
-        Resource = data.aws_iam_openid_connect_provider.github_actions.arn
+        Resource = "*"
       }
     ]
   })
