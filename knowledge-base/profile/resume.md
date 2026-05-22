@@ -6,7 +6,7 @@
 
 ## Resume Download
 
-[Download Resume](https://drive.google.com/file/d/1X6tyV5DjoZgvnNENW8QcLuO5m-9cKtUa/view)
+[Download Resume](https://drive.google.com/file/d/1i7q1pbex9hVHgj7seRxmMfvC1ojEXhPN/view)
 
 ---
 
